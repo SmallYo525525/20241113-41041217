@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>學生成績輸入</title>
+
+  <!-- 引入 Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.9.3/firebase-app.js";
+    import { getDatabase, ref, set, push, get } from "https://www.gstatic.com/firebasejs/9.9.3/firebase-database.js";
+    
+    // Firebase 配置
+    const firebaseConfig = {
+      apiKey: "AIzaSyDZr1bZBpoZDtHAocExq4Wo5ocJpAiF20U",
+      authDomain: "test1-f4425.firebaseapp.com",
+      databaseURL: "https://test1-f4425-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "test1-f4425",
+      storageBucket: "test1-f4425.firebasestorage.app",
+      messagingSenderId: "276599666493",
+      appId: "1:276599666493:web:c01a1a3ab7f82516373754",
+      measurementId: "G-NTYYF6NNH3"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    // 儲存學生成績
+    function saveGrade() {
+      const studentName = document.getElementById('studentName').value;
+      const grade = document.getElementById('grade').value;
+
+      if (studentName && grade) {
+        const gradesRef = ref(database, 'grades');  // 資料庫路徑為 'grades'
+        const newGradeRef = push(gradesRef);  // 使用 `push()` 創建新項目
+
+        // 使用 `set()` 將數據保存至新創建的節點
+        set(newGradeRef, {
+          studentName: studentName,
+          grade: grade,
+        })
+        .then(() => {
+        //   alert("成績已儲存！");
+          document.getElementById('studentName').value = '';
+          document.getElementById('grade').value = '';
+
+          // 儲存成功後顯示已儲存的成績
+          displayGrades();
+        })
+        .catch((error) => {
+          alert("儲存失敗: " + error.message);
+        });
+      } else {
+        alert("請填寫學生姓名和成績！");
+      }
+    }
+
+    // 顯示所有儲存的成績
+    function displayGrades() {
+      const gradeList = document.getElementById('gradeList');
+      
+      // 確保 DOM 元素已經存在
+      if (!gradeList) {
+        console.error("gradeList 元素不存在");
+        return;
+      }
+
+      const gradesRef = ref(database, 'grades');
+      get(gradesRef).then((snapshot) => {
+        const data = snapshot.val();
+        gradeList.innerHTML = ''; // 清空列表
+
+        // 檢查 Firebase 中是否有資料
+        if (data) {
+          for (let key in data) {
+            const gradeItem = data[key];
+            const listItem = document.createElement('li');
+            listItem.textContent = `${gradeItem.studentName}: ${gradeItem.grade}`;
+            gradeList.appendChild(listItem);
+          }
+        } else {
+          gradeList.innerHTML = '<li>目前沒有成績資料。</li>';
+        }
+      })
+      .catch((error) => {
+        console.error("讀取成績時發生錯誤：", error);
+      });
+    }
+
+    // 網頁載入時顯示成績
+    window.addEventListener('DOMContentLoaded', () => {
+      displayGrades();  // 確保 DOM 完全加載後才顯示成績
+
+      // 綁定按鈕點擊事件
+      const saveButton = document.getElementById('saveButton');
+      if (saveButton) {
+        saveButton.addEventListener('click', saveGrade);
+      }
+    });
+  </script>
+</head>
+<body>
+  <h1>學生成績輸入</h1>
+  <form id="gradeForm">
+    <label for="studentName">學生姓名:</label>
+    <input type="text" id="studentName" required>
+    <br><br>
+    <label for="grade">成績:</label>
+    <input type="text" id="grade" required>
+    <br><br>
+    <button type="button" id="saveButton">儲存成績</button>
+  </form>
+
+  <h2>已儲存的成績</h2>
+  <ul id="gradeList"></ul>
+</body>
+</html>
